@@ -11,7 +11,6 @@ LICENSE
 */
 #ifndef EFB_WIN32_H
 #define EFB_WIN32_H
-#ifndef _WINDOWS_
 
 /* --------------------------------- */
 /* - PE32+ Format Structs (64 bit)   */
@@ -139,6 +138,8 @@ typedef struct EFB_WIN32_IMAGE_SECTION_HEADER
 #define EFB_WIN32_GENERIC_WRITE (0x40000000L)
 #define EFB_WIN32_CREATE_ALWAYS 2
 #define EFB_WIN32_FILE_ATTRIBUTE_NORMAL 0x00000080
+
+#ifndef _WINDOWS_
 
 EFB_WIN32_API(int)
 CloseHandle(void *hObject);

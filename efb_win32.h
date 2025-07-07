@@ -11,6 +11,7 @@ LICENSE
 */
 #ifndef EFB_WIN32_H
 #define EFB_WIN32_H
+#ifndef _WINDOWS_
 
 /* --------------------------------- */
 /* - PE32+ Format Structs (64 bit)   */
@@ -160,6 +161,7 @@ WriteFile(
     unsigned long *lpNumberOfBytesWritten,
     void *lpOverlapped);
 
+#endif
 #endif /* EFB_WIN32_H */
 
 /*

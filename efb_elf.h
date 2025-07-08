@@ -29,11 +29,61 @@ LICENSE
 #define EFB_ELF64_PF_W 2
 #define EFB_ELF64_PF_R 4
 
-#define EFB_ELF64_IDENT_SIZE 16
+#define EFB_ELF_IDENT_SIZE 16
+
+/* ELF32 Header (Executable + Linkable Format) */
+typedef struct EFB_ELF32_EHDR
+{
+  unsigned char e_ident[EFB_ELF_IDENT_SIZE]; /* Magic number and other info */
+  unsigned short e_type;                     /* Object file type */
+  unsigned short e_machine;                  /* Architecture */
+  unsigned int e_version;                    /* Object file version */
+  unsigned int e_entry;                      /* Entry point virtual address */
+  unsigned int e_phoff;                      /* Program header table file offset */
+  unsigned int e_shoff;                      /* Section header table file offset */
+  unsigned int e_flags;                      /* Processor-specific flags */
+  unsigned short e_ehsize;                   /* ELF header size in bytes */
+  unsigned short e_phentsize;                /* Program header table entry size */
+  unsigned short e_phnum;                    /* Program header table entry count */
+  unsigned short e_shentsize;                /* Section header table entry size */
+  unsigned short e_shnum;                    /* Section header table entry count */
+  unsigned short e_shstrndx;                 /* Section header string table index */
+
+} EFB_ELF32_EHDR;
+
+/* ELF32 Program Header */
+typedef struct EFB_ELF32_PHDR
+{
+  unsigned int p_type;   /* Segment type */
+  unsigned int p_offset; /* Segment file offset */
+  unsigned int p_vaddr;  /* Segment virtual address */
+  unsigned int p_paddr;  /* Segment physical address */
+  unsigned int p_filesz; /* Segment size in file */
+  unsigned int p_memsz;  /* Segment size in memory */
+  unsigned int p_flags;  /* Segment flags */
+  unsigned int p_align;  /* Segment alignment */
+
+} EFB_ELF32_PHDR;
+
+/* Section header (not required for minimal executables) */
+typedef struct EFB_ELF32_SHDR
+{
+  unsigned int sh_name;
+  unsigned int sh_type;
+  unsigned int sh_flags;
+  unsigned int sh_addr;
+  unsigned int sh_offset;
+  unsigned int sh_size;
+  unsigned int sh_link;
+  unsigned int sh_info;
+  unsigned int sh_addralign;
+  unsigned int sh_entsize;
+
+} EFB_ELF32_SHDR;
 
 typedef struct EFB_ELF64_EHDR
 {
-  unsigned char e_ident[EFB_ELF64_IDENT_SIZE];
+  unsigned char e_ident[EFB_ELF_IDENT_SIZE];
   unsigned short e_type;
   unsigned short e_machine;
   unsigned int e_version;

@@ -80,26 +80,26 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *te
   phdr = (EFB_ELF64_PHDR *)(elf_buffer + sizeof(EFB_ELF64_EHDR));
   code_dest = elf_buffer + 0x80;
 
-  ehdr->e_ident[0] = EFB_ELF64_MAGIC0;
-  ehdr->e_ident[1] = EFB_ELF64_MAGIC1;
-  ehdr->e_ident[2] = EFB_ELF64_MAGIC2;
-  ehdr->e_ident[3] = EFB_ELF64_MAGIC3;
-  ehdr->e_ident[4] = EFB_ELF64_CLASS;
-  ehdr->e_ident[5] = EFB_ELF64_DATA;
-  ehdr->e_ident[6] = EFB_ELF64_VERSION;
-  ehdr->e_ident[7] = EFB_ELF64_OSABI;
+  ehdr->e_ident[0] = EFB_ELF_MAGIC0;
+  ehdr->e_ident[1] = EFB_ELF_MAGIC1;
+  ehdr->e_ident[2] = EFB_ELF_MAGIC2;
+  ehdr->e_ident[3] = EFB_ELF_MAGIC3;
+  ehdr->e_ident[4] = EFB_ELF_CLASS64;
+  ehdr->e_ident[5] = EFB_ELF_DATA;
+  ehdr->e_ident[6] = EFB_ELF_VERSION;
+  ehdr->e_ident[7] = EFB_ELF_OSABI;
 
-  ehdr->e_type = EFB_ELF64_TYPE_EXEC;
-  ehdr->e_machine = EFB_ELF64_MACHINE_X86_64;
-  ehdr->e_version = EFB_ELF64_VERSION;
+  ehdr->e_type = EFB_ELF_TYPE_EXEC;
+  ehdr->e_machine = EFB_ELF_MACHINE_X86_64;
+  ehdr->e_version = EFB_ELF_VERSION;
   ehdr->e_entry = EFB_ELF_CODE_VADDR;
   ehdr->e_phoff = sizeof(EFB_ELF64_EHDR);
   ehdr->e_ehsize = sizeof(EFB_ELF64_EHDR);
   ehdr->e_phentsize = sizeof(EFB_ELF64_PHDR);
   ehdr->e_phnum = 1;
 
-  phdr->p_type = EFB_ELF64_PT_LOAD;
-  phdr->p_flags = EFB_ELF64_PF_R | EFB_ELF64_PF_X;
+  phdr->p_type = EFB_ELF_PT_LOAD;
+  phdr->p_flags = EFB_ELF_PF_R | EFB_ELF_PF_X;
   phdr->p_offset = 0x0;
   phdr->p_vaddr = 0x400000;
   phdr->p_paddr = 0x400000;

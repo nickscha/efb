@@ -74,6 +74,18 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *te
   unsigned long file_size = code_offset + text_section_size;
 
   unsigned char elf_buffer[EFB_MAX_EXECUTABLE_SIZE];
+
+  if (!out_file_name || !text_section)
+  {
+    return (ended);
+  }
+
+  /* Fail if file_size exceeds static buffer*/
+  if (file_size > EFB_MAX_EXECUTABLE_SIZE)
+  {
+    return (ended);
+  }
+
   efb_zero_memory(elf_buffer, sizeof(elf_buffer));
 
   ehdr = (EFB_ELF64_EHDR *)elf_buffer;
@@ -116,9 +128,9 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *te
   /* === Write to File === */
   hFile = CreateFileA(out_file_name, EFB_WIN32_GENERIC_WRITE, 0, 0, EFB_WIN32_CREATE_ALWAYS, EFB_WIN32_FILE_ATTRIBUTE_NORMAL, 0);
   ended = (WriteFile(hFile, elf_buffer, file_size, &bytes_written, 0) != 0) && (bytes_written == file_size);
-  CloseHandle(hFile);
+  ended = CloseHandle(hFile);
 
-  return ended;
+  return (ended);
 }
 
 EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned char *text_section, unsigned long text_section_size)
@@ -154,7 +166,6 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
 
   if (!out_file_name || !text_section)
   {
-
     return (ended);
   }
 

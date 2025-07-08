@@ -11,6 +11,9 @@ LICENSE
 #ifndef EFB_H
 #define EFB_H
 
+#include "efb_elf.h" /* ELF-Format for Linux/Unix/... */
+#include "efb_pe.h"  /* PE-Format for Windows         */
+
 /* #############################################################################
  * # COMPILER SETTINGS
  * #############################################################################
@@ -40,8 +43,8 @@ typedef int efb_bool;
 #define false 0
 #endif
 
-#ifndef EFB_MAX_EXE_SIZE
-#define EFB_MAX_EXE_SIZE 8192
+#ifndef EFB_MAX_EXECUTABLE_SIZE
+#define EFB_MAX_EXECUTABLE_SIZE 8192
 #endif
 
 #define EFB_ALIGN_UP(val, align) (((val) + (align) - 1) & ~((align) - 1))
@@ -55,11 +58,62 @@ EFB_API EFB_INLINE void efb_zero_memory(unsigned char *buffer, unsigned long siz
   }
 }
 
-#include "efb_win32.h"
+EFB_API EFB_INLINE efb_bool efb_build_elf(unsigned char *text_section, unsigned long text_section_size)
+{
+  efb_bool ended = false;
+
+  unsigned long i;
+
+  EFB_ELF64_EHDR *ehdr;
+  EFB_ELF64_PHDR *phdr;
+  unsigned char *code_dest;
+
+  unsigned char elf_buffer[EFB_MAX_EXECUTABLE_SIZE];
+  efb_zero_memory(elf_buffer, sizeof(elf_buffer));
+
+  ehdr = (EFB_ELF64_EHDR *)elf_buffer;
+  phdr = (EFB_ELF64_PHDR *)(elf_buffer + sizeof(EFB_ELF64_EHDR));
+  code_dest = elf_buffer + 0x80;
+
+  ehdr->e_ident[0] = EFB_ELF64_MAGIC0;
+  ehdr->e_ident[1] = EFB_ELF64_MAGIC1;
+  ehdr->e_ident[2] = EFB_ELF64_MAGIC2;
+  ehdr->e_ident[3] = EFB_ELF64_MAGIC3;
+  ehdr->e_ident[4] = EFB_ELF64_CLASS;
+  ehdr->e_ident[5] = EFB_ELF64_DATA;
+  ehdr->e_ident[6] = EFB_ELF64_VERSION;
+  ehdr->e_ident[7] = EFB_ELF64_OSABI;
+
+  ehdr->e_type = EFB_ELF64_TYPE_EXEC;
+  ehdr->e_machine = EFB_ELF64_MACHINE_X86_64;
+  ehdr->e_version = EFB_ELF64_VERSION;
+  ehdr->e_entry = EFB_ELF_CODE_VADDR;
+  ehdr->e_phoff = sizeof(EFB_ELF64_EHDR);
+  ehdr->e_ehsize = sizeof(EFB_ELF64_EHDR);
+  ehdr->e_phentsize = sizeof(EFB_ELF64_PHDR);
+  ehdr->e_phnum = 1;
+
+  phdr->p_type = EFB_ELF64_PT_LOAD;
+  phdr->p_flags = EFB_ELF64_PF_R | EFB_ELF64_PF_X;
+  phdr->p_offset = 0x0;
+  phdr->p_vaddr = 0x400000;
+  phdr->p_paddr = 0x400000;
+  phdr->p_filesz = 0x80 + text_section_size;
+  phdr->p_memsz = 0x80 + text_section_size;
+  phdr->p_align = EFB_ELF_ALIGN;
+
+  /* Write code */
+  for (i = 0; i < text_section_size; ++i)
+  {
+    code_dest[i] = text_section[i];
+  }
+
+  return ended;
+}
 
 EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned char *text_section, unsigned long text_section_size)
 {
-  unsigned char efb_buffer[EFB_MAX_EXE_SIZE];
+  unsigned char efb_buffer[EFB_MAX_EXECUTABLE_SIZE];
 
   void *hFile;
   unsigned long bytes_written;
@@ -69,7 +123,7 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
   unsigned long section_align = 0x1000;
   unsigned long code_va = 0x1000;
   unsigned long entry_point_rva = code_va;
-  unsigned short machine_type = EFB_WIN32_IMAGE_FILE_MACHINE_AMD64;
+  unsigned short machine_type = EFB_PE_IMAGE_FILE_MACHINE_AMD64;
 
   /* Header sizes */
   long nt_headers_offset = 0x40;
@@ -79,9 +133,9 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
   unsigned long size_of_image = EFB_ALIGN_UP(code_va + virtual_size, section_align);
   unsigned long file_size = size_of_headers + raw_size;
 
-  EFB_WIN32_DOS_HEADER *dos;
-  EFB_WIN32_IMAGE_NT_HEADERS64 *nt;
-  EFB_WIN32_IMAGE_SECTION_HEADER *section;
+  EFB_PE_DOS_HEADER *dos;
+  EFB_PE_IMAGE_NT_HEADERS64 *nt;
+  EFB_PE_IMAGE_SECTION_HEADER *section;
 
   unsigned char *code_dest;
   unsigned long i;
@@ -95,7 +149,7 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
   }
 
   /* Fail if file_size exceeds static buffer*/
-  if (file_size > EFB_MAX_EXE_SIZE)
+  if (file_size > EFB_MAX_EXECUTABLE_SIZE)
   {
     return (ended);
   }
@@ -103,20 +157,20 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
   efb_zero_memory(efb_buffer, file_size);
 
   /* === DOS Header === */
-  dos = (EFB_WIN32_DOS_HEADER *)efb_buffer;
+  dos = (EFB_PE_DOS_HEADER *)efb_buffer;
   dos->e_magic = 0x5A4D; /* 'MZ' */
   dos->e_lfanew = nt_headers_offset;
 
   /* === NT Headers === */
-  nt = (EFB_WIN32_IMAGE_NT_HEADERS64 *)(efb_buffer + nt_headers_offset);
+  nt = (EFB_PE_IMAGE_NT_HEADERS64 *)(efb_buffer + nt_headers_offset);
   nt->Signature = 0x00004550; /* 'PE\0\0' */
 
   nt->FileHeader.Machine = machine_type;
   nt->FileHeader.NumberOfSections = 1;
-  nt->FileHeader.SizeOfOptionalHeader = sizeof(EFB_WIN32_IMAGE_OPTIONAL_HEADER64);
-  nt->FileHeader.Characteristics = EFB_WIN32_IMAGE_FILE_EXECUTABLE_IMAGE | EFB_WIN32_IMAGE_FILE_RELOCS_STRIPPED | EFB_WIN32_IMAGE_FILE_LARGE_ADDRESS_AWARE;
+  nt->FileHeader.SizeOfOptionalHeader = sizeof(EFB_PE_IMAGE_OPTIONAL_HEADER64);
+  nt->FileHeader.Characteristics = EFB_PE_IMAGE_FILE_EXECUTABLE_IMAGE | EFB_PE_IMAGE_FILE_RELOCS_STRIPPED | EFB_PE_IMAGE_FILE_LARGE_ADDRESS_AWARE;
 
-  nt->OptionalHeader.Magic = EFB_WIN32_IMAGE_NT_OPTIONAL_HDR64_MAGIC;
+  nt->OptionalHeader.Magic = EFB_PE_IMAGE_NT_OPTIONAL_HDR64_MAGIC;
   nt->OptionalHeader.MajorLinkerVersion = 14;
   nt->OptionalHeader.MinorLinkerVersion = 0;
   nt->OptionalHeader.SizeOfCode = raw_size;
@@ -132,11 +186,11 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
   nt->OptionalHeader.MinorSubsystemVersion = 0;
   nt->OptionalHeader.SizeOfImage = size_of_image;
   nt->OptionalHeader.SizeOfHeaders = size_of_headers;
-  nt->OptionalHeader.Subsystem = EFB_WIN32_IMAGE_SUBSYSTEM_WINDOWS_CUI;
-  nt->OptionalHeader.NumberOfRvaAndSizes = EFB_WIN32_IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+  nt->OptionalHeader.Subsystem = EFB_PE_IMAGE_SUBSYSTEM_WINDOWS_CUI;
+  nt->OptionalHeader.NumberOfRvaAndSizes = EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
 
   /* === Section Header ===*/
-  section = (EFB_WIN32_IMAGE_SECTION_HEADER *)((unsigned char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+  section = (EFB_PE_IMAGE_SECTION_HEADER *)((unsigned char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
   section->Name[0] = '.';
   section->Name[1] = 't';
   section->Name[2] = 'e';
@@ -146,7 +200,7 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
   section->VirtualAddress = code_va;
   section->SizeOfRawData = raw_size;
   section->PointerToRawData = size_of_headers;
-  section->Characteristics = EFB_WIN32_IMAGE_SCN_CNT_CODE | EFB_WIN32_IMAGE_SCN_MEM_EXECUTE | EFB_WIN32_IMAGE_SCN_MEM_READ;
+  section->Characteristics = EFB_PE_IMAGE_SCN_CNT_CODE | EFB_PE_IMAGE_SCN_MEM_EXECUTE | EFB_PE_IMAGE_SCN_MEM_READ;
 
   /* === Write Code ===*/
   code_dest = efb_buffer + size_of_headers;

@@ -1,7 +1,6 @@
-/* efb_win32.h - v0.1 - public domain data structures - nickscha 2025
+/* efb_pe.h - v0.1 - public domain data structures - nickscha 2025
 
-Replacement for massivly bloated windows.h.
-Contains only function/struct prototypes for win32 api stuff efb actually needs.
+Contains the PE-Format definitions
 
 LICENSE
 
@@ -9,28 +8,28 @@ LICENSE
   See end of file for detailed license information.
 
 */
-#ifndef EFB_WIN32_H
-#define EFB_WIN32_H
+#ifndef EFB_PE_H
+#define EFB_PE_H
 
 /* --------------------------------- */
 /* - PE32+ Format Structs (64 bit)   */
 /* --------------------------------- */
-#define EFB_WIN32_IMAGE_FILE_RELOCS_STRIPPED 0x0001
-#define EFB_WIN32_IMAGE_FILE_EXECUTABLE_IMAGE 0x0002
-#define EFB_WIN32_IMAGE_FILE_LARGE_ADDRESS_AWARE 0x0020
-#define EFB_WIN32_IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
-#define EFB_WIN32_IMAGE_SUBSYSTEM_NATIVE 1
-#define EFB_WIN32_IMAGE_SUBSYSTEM_WINDOWS_GUI 2
-#define EFB_WIN32_IMAGE_SUBSYSTEM_WINDOWS_CUI 3
-#define EFB_WIN32_IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
-#define EFB_WIN32_IMAGE_SCN_CNT_CODE 0x00000020
-#define EFB_WIN32_IMAGE_SCN_MEM_EXECUTE 0x20000000
-#define EFB_WIN32_IMAGE_SCN_MEM_READ 0x40000000
-#define EFB_WIN32_IMAGE_FILE_MACHINE_I386 0x014c
-#define EFB_WIN32_IMAGE_FILE_MACHINE_ARM64 0xaa64
-#define EFB_WIN32_IMAGE_FILE_MACHINE_AMD64 0x8664
+#define EFB_PE_IMAGE_FILE_RELOCS_STRIPPED 0x0001
+#define EFB_PE_IMAGE_FILE_EXECUTABLE_IMAGE 0x0002
+#define EFB_PE_IMAGE_FILE_LARGE_ADDRESS_AWARE 0x0020
+#define EFB_PE_IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
+#define EFB_PE_IMAGE_SUBSYSTEM_NATIVE 1
+#define EFB_PE_IMAGE_SUBSYSTEM_WINDOWS_GUI 2
+#define EFB_PE_IMAGE_SUBSYSTEM_WINDOWS_CUI 3
+#define EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
+#define EFB_PE_IMAGE_SCN_CNT_CODE 0x00000020
+#define EFB_PE_IMAGE_SCN_MEM_EXECUTE 0x20000000
+#define EFB_PE_IMAGE_SCN_MEM_READ 0x40000000
+#define EFB_PE_IMAGE_FILE_MACHINE_I386 0x014c
+#define EFB_PE_IMAGE_FILE_MACHINE_ARM64 0xaa64
+#define EFB_PE_IMAGE_FILE_MACHINE_AMD64 0x8664
 
-typedef struct EFB_WIN32_DOS_HEADER
+typedef struct EFB_PE_DOS_HEADER
 {
     unsigned short e_magic;
     unsigned short e_cblp;
@@ -52,9 +51,9 @@ typedef struct EFB_WIN32_DOS_HEADER
     unsigned short e_res2[10];
     long e_lfanew;
 
-} EFB_WIN32_DOS_HEADER;
+} EFB_PE_DOS_HEADER;
 
-typedef struct EFB_WIN32_IMAGE_FILE_HEADER
+typedef struct EFB_PE_IMAGE_FILE_HEADER
 {
     unsigned short Machine;
     unsigned short NumberOfSections;
@@ -64,19 +63,19 @@ typedef struct EFB_WIN32_IMAGE_FILE_HEADER
     unsigned short SizeOfOptionalHeader;
     unsigned short Characteristics;
 
-} EFB_WIN32_IMAGE_FILE_HEADER;
+} EFB_PE_IMAGE_FILE_HEADER;
 
-typedef struct EFB_WIN32_IMAGE_DATA_DIRECTORY
+typedef struct EFB_PE_IMAGE_DATA_DIRECTORY
 {
     unsigned long VirtualAddress;
     unsigned long Size;
 
-} EFB_WIN32_IMAGE_DATA_DIRECTORY;
+} EFB_PE_IMAGE_DATA_DIRECTORY;
 
 /* --------------------------------- */
 /* - Optional Header (32bit)         */
 /* --------------------------------- */
-typedef struct EFB_WIN32_IMAGE_OPTIONAL_HEADER32
+typedef struct EFB_PE_IMAGE_OPTIONAL_HEADER32
 {
     unsigned short Magic;
     unsigned char MajorLinkerVersion;
@@ -108,14 +107,14 @@ typedef struct EFB_WIN32_IMAGE_OPTIONAL_HEADER32
     unsigned long SizeOfHeapCommit;
     unsigned long LoaderFlags;
     unsigned long NumberOfRvaAndSizes;
-    EFB_WIN32_IMAGE_DATA_DIRECTORY DataDirectory[EFB_WIN32_IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+    EFB_PE_IMAGE_DATA_DIRECTORY DataDirectory[EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 
-} EFB_WIN32_IMAGE_OPTIONAL_HEADER32;
+} EFB_PE_IMAGE_OPTIONAL_HEADER32;
 
 /* --------------------------------- */
 /* - Optional Header (64bit)         */
 /* --------------------------------- */
-typedef struct EFB_WIN32_IMAGE_OPTIONAL_HEADER64
+typedef struct EFB_PE_IMAGE_OPTIONAL_HEADER64
 {
     unsigned short Magic;
     unsigned char MajorLinkerVersion;
@@ -151,27 +150,27 @@ typedef struct EFB_WIN32_IMAGE_OPTIONAL_HEADER64
     unsigned long SizeOfHeapCommitHighPart;
     unsigned long LoaderFlags;
     unsigned long NumberOfRvaAndSizes;
-    EFB_WIN32_IMAGE_DATA_DIRECTORY DataDirectory[EFB_WIN32_IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+    EFB_PE_IMAGE_DATA_DIRECTORY DataDirectory[EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 
-} EFB_WIN32_IMAGE_OPTIONAL_HEADER64;
+} EFB_PE_IMAGE_OPTIONAL_HEADER64;
 
-typedef struct EFB_WIN32_IMAGE_NT_HEADERS32
+typedef struct EFB_PE_IMAGE_NT_HEADERS32
 {
     unsigned long Signature;
-    EFB_WIN32_IMAGE_FILE_HEADER FileHeader;
-    EFB_WIN32_IMAGE_OPTIONAL_HEADER32 OptionalHeader;
+    EFB_PE_IMAGE_FILE_HEADER FileHeader;
+    EFB_PE_IMAGE_OPTIONAL_HEADER32 OptionalHeader;
 
-} EFB_WIN32_IMAGE_NT_HEADERS32;
+} EFB_PE_IMAGE_NT_HEADERS32;
 
-typedef struct EFB_WIN32_IMAGE_NT_HEADERS64
+typedef struct EFB_PE_IMAGE_NT_HEADERS64
 {
     unsigned long Signature;
-    EFB_WIN32_IMAGE_FILE_HEADER FileHeader;
-    EFB_WIN32_IMAGE_OPTIONAL_HEADER64 OptionalHeader;
+    EFB_PE_IMAGE_FILE_HEADER FileHeader;
+    EFB_PE_IMAGE_OPTIONAL_HEADER64 OptionalHeader;
 
-} EFB_WIN32_IMAGE_NT_HEADERS64;
+} EFB_PE_IMAGE_NT_HEADERS64;
 
-typedef struct EFB_WIN32_IMAGE_SECTION_HEADER
+typedef struct EFB_PE_IMAGE_SECTION_HEADER
 {
     unsigned char Name[8];
     union
@@ -187,7 +186,7 @@ typedef struct EFB_WIN32_IMAGE_SECTION_HEADER
     unsigned short NumberOfRelocations;
     unsigned short NumberOfLinenumbers;
     unsigned long Characteristics;
-} EFB_WIN32_IMAGE_SECTION_HEADER;
+} EFB_PE_IMAGE_SECTION_HEADER;
 
 /* --------------------------------- */
 /* - WIN32 File API                  */
@@ -224,7 +223,7 @@ WriteFile(
 
 #endif /* _WINDOWS_   */
 #endif /* _WIN32      */
-#endif /* EFB_WIN32_H */
+#endif /* EFB_PE_H */
 
 /*
    ------------------------------------------------------------------------------

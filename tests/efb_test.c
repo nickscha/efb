@@ -38,12 +38,19 @@ int main(void)
   unsigned char machine_code_infinite_loop[] = {0xEB, 0xFE};
 
   /*
-  int 3 
+  int 3
   jmp $
   */
   unsigned char machine_code_debug[] = {0xCC, 0xEB, 0xFE};
 
-  /* Build executable format */
+  /* Build ELF-Format */
+  assert(efb_build_elf("ret_undefined.out", machine_code_ret_undefined, sizeof(machine_code_ret_undefined)));
+  assert(efb_build_elf("ret_valid.out", machine_code_ret_valid, sizeof(machine_code_ret_valid)));
+  assert(efb_build_elf("ud2.out", machine_code_ud2, sizeof(machine_code_ud2)));
+  assert(efb_build_elf("infinite_loop.out", machine_code_infinite_loop, sizeof(machine_code_infinite_loop)));
+  assert(efb_build_elf("debug.out", machine_code_debug, sizeof(machine_code_debug)));
+
+  /* Build PE-Format */
   assert(efb_build_executable("ret_undefined.exe", machine_code_ret_undefined, sizeof(machine_code_ret_undefined)));
   assert(efb_build_executable("ret_valid.exe", machine_code_ret_valid, sizeof(machine_code_ret_valid)));
   assert(efb_build_executable("ud2.exe", machine_code_ud2, sizeof(machine_code_ud2)));

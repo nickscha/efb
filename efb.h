@@ -58,15 +58,20 @@ EFB_API EFB_INLINE void efb_zero_memory(unsigned char *buffer, unsigned long siz
   }
 }
 
-EFB_API EFB_INLINE efb_bool efb_build_elf(unsigned char *text_section, unsigned long text_section_size)
+EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *text_section, unsigned long text_section_size)
 {
   efb_bool ended = false;
 
   unsigned long i;
+  void *hFile;
+  unsigned long bytes_written = 0;
 
   EFB_ELF64_EHDR *ehdr;
   EFB_ELF64_PHDR *phdr;
   unsigned char *code_dest;
+
+  unsigned long code_offset = 0x80;
+  unsigned long file_size = code_offset + text_section_size;
 
   unsigned char elf_buffer[EFB_MAX_EXECUTABLE_SIZE];
   efb_zero_memory(elf_buffer, sizeof(elf_buffer));
@@ -107,6 +112,11 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(unsigned char *text_section, unsigned 
   {
     code_dest[i] = text_section[i];
   }
+
+  /* === Write to File === */
+  hFile = CreateFileA(out_file_name, EFB_WIN32_GENERIC_WRITE, 0, 0, EFB_WIN32_CREATE_ALWAYS, EFB_WIN32_FILE_ATTRIBUTE_NORMAL, 0);
+  ended = (WriteFile(hFile, elf_buffer, file_size, &bytes_written, 0) != 0) && (bytes_written == file_size);
+  CloseHandle(hFile);
 
   return ended;
 }

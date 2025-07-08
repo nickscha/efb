@@ -133,6 +133,7 @@ typedef struct EFB_WIN32_IMAGE_SECTION_HEADER
 /* --------------------------------- */
 /* - WIN32 File API                  */
 /* --------------------------------- */
+#ifdef _WIN32
 #define EFB_WIN32_GENERIC_WRITE (0x40000000L)
 #define EFB_WIN32_CREATE_ALWAYS 2
 #define EFB_WIN32_FILE_ATTRIBUTE_NORMAL 0x00000080
@@ -162,7 +163,8 @@ WriteFile(
     unsigned long *lpNumberOfBytesWritten,
     void *lpOverlapped);
 
-#endif
+#endif /* _WINDOWS_   */
+#endif /* _WIN32      */
 #endif /* EFB_WIN32_H */
 
 /*

@@ -22,7 +22,7 @@ int main(void)
   unsigned char machine_code_ret_undefined[] = {0xC3};
 
   /*
-  mov eax, 0;
+  mov eax, 0
   ret
   */
   unsigned char machine_code_ret_valid[] = {0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3};
@@ -38,7 +38,8 @@ int main(void)
   unsigned char machine_code_infinite_loop[] = {0xEB, 0xFE};
 
   /*
-  int 3; jmp $
+  int 3 
+  jmp $
   */
   unsigned char machine_code_debug[] = {0xCC, 0xEB, 0xFE};
 

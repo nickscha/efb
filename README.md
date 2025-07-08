@@ -16,7 +16,7 @@ Download or clone efb.h and include it in your project.
 int main() {
 
     /*
-      mov eax, 0;
+      mov eax, 0
       ret
     */
     unsigned char x86_64_ret[] = {0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3};

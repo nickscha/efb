@@ -11,9 +11,9 @@ LICENSE
 #ifndef EFB_PE_H
 #define EFB_PE_H
 
-/* --------------------------------- */
-/* - PE32+ Format Structs (64 bit)   */
-/* --------------------------------- */
+/* ------------------------------------ */
+/* - PE32 Format Structs (32 & 64 bit)  */
+/* ------------------------------------ */
 #define EFB_PE_IMAGE_FILE_RELOCS_STRIPPED 0x0001
 #define EFB_PE_IMAGE_FILE_EXECUTABLE_IMAGE 0x0002
 #define EFB_PE_IMAGE_FILE_LARGE_ADDRESS_AWARE 0x0020
@@ -72,6 +72,24 @@ typedef struct EFB_PE_IMAGE_DATA_DIRECTORY
 
 } EFB_PE_IMAGE_DATA_DIRECTORY;
 
+typedef struct EFB_PE_IMAGE_SECTION_HEADER
+{
+    unsigned char Name[8];
+    union
+    {
+        unsigned long PhysicalAddress;
+        unsigned long VirtualSize;
+    } Misc;
+    unsigned long VirtualAddress;
+    unsigned long SizeOfRawData;
+    unsigned long PointerToRawData;
+    unsigned long PointerToRelocations;
+    unsigned long PointerToLinenumbers;
+    unsigned short NumberOfRelocations;
+    unsigned short NumberOfLinenumbers;
+    unsigned long Characteristics;
+} EFB_PE_IMAGE_SECTION_HEADER;
+
 /* --------------------------------- */
 /* - Optional Header (32bit)         */
 /* --------------------------------- */
@@ -110,6 +128,14 @@ typedef struct EFB_PE_IMAGE_OPTIONAL_HEADER32
     EFB_PE_IMAGE_DATA_DIRECTORY DataDirectory[EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 
 } EFB_PE_IMAGE_OPTIONAL_HEADER32;
+
+typedef struct EFB_PE_IMAGE_NT_HEADERS32
+{
+    unsigned long Signature;
+    EFB_PE_IMAGE_FILE_HEADER FileHeader;
+    EFB_PE_IMAGE_OPTIONAL_HEADER32 OptionalHeader;
+
+} EFB_PE_IMAGE_NT_HEADERS32;
 
 /* --------------------------------- */
 /* - Optional Header (64bit)         */
@@ -154,14 +180,6 @@ typedef struct EFB_PE_IMAGE_OPTIONAL_HEADER64
 
 } EFB_PE_IMAGE_OPTIONAL_HEADER64;
 
-typedef struct EFB_PE_IMAGE_NT_HEADERS32
-{
-    unsigned long Signature;
-    EFB_PE_IMAGE_FILE_HEADER FileHeader;
-    EFB_PE_IMAGE_OPTIONAL_HEADER32 OptionalHeader;
-
-} EFB_PE_IMAGE_NT_HEADERS32;
-
 typedef struct EFB_PE_IMAGE_NT_HEADERS64
 {
     unsigned long Signature;
@@ -169,24 +187,6 @@ typedef struct EFB_PE_IMAGE_NT_HEADERS64
     EFB_PE_IMAGE_OPTIONAL_HEADER64 OptionalHeader;
 
 } EFB_PE_IMAGE_NT_HEADERS64;
-
-typedef struct EFB_PE_IMAGE_SECTION_HEADER
-{
-    unsigned char Name[8];
-    union
-    {
-        unsigned long PhysicalAddress;
-        unsigned long VirtualSize;
-    } Misc;
-    unsigned long VirtualAddress;
-    unsigned long SizeOfRawData;
-    unsigned long PointerToRawData;
-    unsigned long PointerToRelocations;
-    unsigned long PointerToLinenumbers;
-    unsigned short NumberOfRelocations;
-    unsigned short NumberOfLinenumbers;
-    unsigned long Characteristics;
-} EFB_PE_IMAGE_SECTION_HEADER;
 
 #endif /* EFB_PE_H */
 

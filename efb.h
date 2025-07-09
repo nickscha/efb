@@ -332,6 +332,7 @@ typedef struct EFB_ELF64_SHDR
 
 typedef enum efb_arch
 {
+  EFB_ARCH_I386,
   EFB_ARCH_X86_64,
   EFB_ARCH_AARCH64,
   EFB_ARCH_COUNT

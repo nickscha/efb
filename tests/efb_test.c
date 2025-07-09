@@ -56,27 +56,27 @@ int main(void)
   model.code_size = sizeof(machine_code_ret_undefined);
 
   assert(efb_build(&model));
-  assert(efb_platform_write("ret_undefined.exe", model.out_binary, model.out_binary_size));
+  assert(efb_platform_write("dist/ret_undefined.exe", model.out_binary, model.out_binary_size));
 
   model.code = machine_code_ret_valid;
   model.code_size = sizeof(machine_code_ret_valid);
   assert(efb_build(&model));
-  assert(efb_platform_write("ret_valid.exe", model.out_binary, model.out_binary_size));
+  assert(efb_platform_write("dist/ret_valid.exe", model.out_binary, model.out_binary_size));
 
   model.code = machine_code_ud2;
   model.code_size = sizeof(machine_code_ud2);
   assert(efb_build(&model));
-  assert(efb_platform_write("ud2.exe", model.out_binary, model.out_binary_size));
+  assert(efb_platform_write("dist/ud2.exe", model.out_binary, model.out_binary_size));
 
   model.code = machine_code_infinite_loop;
   model.code_size = sizeof(machine_code_infinite_loop);
   assert(efb_build(&model));
-  assert(efb_platform_write("infinite_loop.exe", model.out_binary, model.out_binary_size));
+  assert(efb_platform_write("dist/infinite_loop.exe", model.out_binary, model.out_binary_size));
 
   model.code = machine_code_debug;
   model.code_size = sizeof(machine_code_debug);
   assert(efb_build(&model));
-  assert(efb_platform_write("debug.exe", model.out_binary, model.out_binary_size));
+  assert(efb_platform_write("dist/debug.exe", model.out_binary, model.out_binary_size));
 
   return 0;
 }

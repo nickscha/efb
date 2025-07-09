@@ -387,7 +387,6 @@ EFB_API EFB_INLINE efb_bool efb_build_pe(efb_model *model)
   unsigned long section_align = 0x1000;
   unsigned long code_va = 0x1000;
   unsigned long entry_point_rva = code_va;
-  unsigned short machine_type = model->arch == EFB_ARCH_X86_64 ? EFB_PE_IMAGE_FILE_MACHINE_AMD64 : EFB_PE_IMAGE_FILE_MACHINE_ARM64;
 
   /* Header sizes */
   long nt_headers_offset = 0x40;
@@ -403,8 +402,26 @@ EFB_API EFB_INLINE efb_bool efb_build_pe(efb_model *model)
 
   unsigned char *code_dest;
   unsigned long i;
+  unsigned short machine_type;
 
+  efb_bool is_64 = true;
   efb_bool ended = false;
+
+  switch (model->arch)
+  {
+  case EFB_ARCH_I386:
+    machine_type = EFB_PE_IMAGE_FILE_MACHINE_I386;
+    is_64 = false;
+    break;
+  case EFB_ARCH_X86_64:
+    machine_type = EFB_PE_IMAGE_FILE_MACHINE_AMD64;
+    break;
+  case EFB_ARCH_AARCH64:
+    machine_type = EFB_PE_IMAGE_FILE_MACHINE_ARM64;
+    break;
+  default:
+    return ended;
+  }
 
   /* Fail if file_size exceeds static buffer*/
   if (file_size > model->out_binary_capacity)
@@ -420,46 +437,91 @@ EFB_API EFB_INLINE efb_bool efb_build_pe(efb_model *model)
   dos->e_magic = 0x5A4D; /* 'MZ' */
   dos->e_lfanew = nt_headers_offset;
 
-  /* === NT Headers === */
-  nt = (EFB_PE_IMAGE_NT_HEADERS64 *)(model->out_binary + nt_headers_offset);
-  nt->Signature = 0x00004550; /* 'PE\0\0' */
+  if (is_64)
+  {
+    /* === NT Headers === */
+    nt = (EFB_PE_IMAGE_NT_HEADERS64 *)(model->out_binary + nt_headers_offset);
+    nt->Signature = 0x00004550; /* 'PE\0\0' */
 
-  nt->FileHeader.Machine = machine_type;
-  nt->FileHeader.NumberOfSections = 1;
-  nt->FileHeader.SizeOfOptionalHeader = sizeof(EFB_PE_IMAGE_OPTIONAL_HEADER64);
-  nt->FileHeader.Characteristics = EFB_PE_IMAGE_FILE_EXECUTABLE_IMAGE | EFB_PE_IMAGE_FILE_RELOCS_STRIPPED | EFB_PE_IMAGE_FILE_LARGE_ADDRESS_AWARE;
+    nt->FileHeader.Machine = machine_type;
+    nt->FileHeader.NumberOfSections = 1;
+    nt->FileHeader.SizeOfOptionalHeader = sizeof(EFB_PE_IMAGE_OPTIONAL_HEADER64);
+    nt->FileHeader.Characteristics = EFB_PE_IMAGE_FILE_EXECUTABLE_IMAGE | EFB_PE_IMAGE_FILE_RELOCS_STRIPPED | EFB_PE_IMAGE_FILE_LARGE_ADDRESS_AWARE;
 
-  nt->OptionalHeader.Magic = EFB_PE_IMAGE_NT_OPTIONAL_HDR64_MAGIC;
-  nt->OptionalHeader.MajorLinkerVersion = 14;
-  nt->OptionalHeader.MinorLinkerVersion = 0;
-  nt->OptionalHeader.SizeOfCode = raw_size;
-  nt->OptionalHeader.AddressOfEntryPoint = entry_point_rva;
-  nt->OptionalHeader.BaseOfCode = code_va;
-  nt->OptionalHeader.ImageBaseLowPart = 0x40000000; /* 0x140000000 */
-  nt->OptionalHeader.ImageBaseHighPart = 0x1;       /* 0x140000000 */
-  nt->OptionalHeader.SectionAlignment = section_align;
-  nt->OptionalHeader.FileAlignment = file_align;
-  nt->OptionalHeader.MajorOperatingSystemVersion = 6;
-  nt->OptionalHeader.MinorOperatingSystemVersion = 0;
-  nt->OptionalHeader.MajorSubsystemVersion = 6;
-  nt->OptionalHeader.MinorSubsystemVersion = 0;
-  nt->OptionalHeader.SizeOfImage = size_of_image;
-  nt->OptionalHeader.SizeOfHeaders = size_of_headers;
-  nt->OptionalHeader.Subsystem = EFB_PE_IMAGE_SUBSYSTEM_WINDOWS_CUI;
-  nt->OptionalHeader.NumberOfRvaAndSizes = EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+    nt->OptionalHeader.Magic = EFB_PE_IMAGE_NT_OPTIONAL_HDR64_MAGIC;
+    nt->OptionalHeader.MajorLinkerVersion = 14;
+    nt->OptionalHeader.MinorLinkerVersion = 0;
+    nt->OptionalHeader.SizeOfCode = raw_size;
+    nt->OptionalHeader.AddressOfEntryPoint = entry_point_rva;
+    nt->OptionalHeader.BaseOfCode = code_va;
+    nt->OptionalHeader.ImageBaseLowPart = 0x40000000; /* 0x140000000 */
+    nt->OptionalHeader.ImageBaseHighPart = 0x1;       /* 0x140000000 */
+    nt->OptionalHeader.SectionAlignment = section_align;
+    nt->OptionalHeader.FileAlignment = file_align;
+    nt->OptionalHeader.MajorOperatingSystemVersion = 6;
+    nt->OptionalHeader.MinorOperatingSystemVersion = 0;
+    nt->OptionalHeader.MajorSubsystemVersion = 6;
+    nt->OptionalHeader.MinorSubsystemVersion = 0;
+    nt->OptionalHeader.SizeOfImage = size_of_image;
+    nt->OptionalHeader.SizeOfHeaders = size_of_headers;
+    nt->OptionalHeader.Subsystem = EFB_PE_IMAGE_SUBSYSTEM_WINDOWS_CUI;
+    nt->OptionalHeader.NumberOfRvaAndSizes = EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
 
-  /* === Section Header ===*/
-  section = (EFB_PE_IMAGE_SECTION_HEADER *)((unsigned char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
-  section->Name[0] = '.';
-  section->Name[1] = 't';
-  section->Name[2] = 'e';
-  section->Name[3] = 'x';
-  section->Name[4] = 't';
-  section->Misc.VirtualSize = model->code_size;
-  section->VirtualAddress = code_va;
-  section->SizeOfRawData = raw_size;
-  section->PointerToRawData = size_of_headers;
-  section->Characteristics = EFB_PE_IMAGE_SCN_CNT_CODE | EFB_PE_IMAGE_SCN_MEM_EXECUTE | EFB_PE_IMAGE_SCN_MEM_READ;
+    /* === Section Header ===*/
+    section = (EFB_PE_IMAGE_SECTION_HEADER *)((unsigned char *)&nt->OptionalHeader + nt->FileHeader.SizeOfOptionalHeader);
+    section->Name[0] = '.';
+    section->Name[1] = 't';
+    section->Name[2] = 'e';
+    section->Name[3] = 'x';
+    section->Name[4] = 't';
+    section->Misc.VirtualSize = model->code_size;
+    section->VirtualAddress = code_va;
+    section->SizeOfRawData = raw_size;
+    section->PointerToRawData = size_of_headers;
+    section->Characteristics = EFB_PE_IMAGE_SCN_CNT_CODE | EFB_PE_IMAGE_SCN_MEM_EXECUTE | EFB_PE_IMAGE_SCN_MEM_READ;
+  }
+  else
+  {
+    /* === NT Headers === */
+    EFB_PE_IMAGE_NT_HEADERS32 *nt32 = (EFB_PE_IMAGE_NT_HEADERS32 *)(model->out_binary + nt_headers_offset);
+    nt32->Signature = 0x00004550;
+
+    nt32->FileHeader.Machine = machine_type;
+    nt32->FileHeader.NumberOfSections = 1;
+    nt32->FileHeader.SizeOfOptionalHeader = sizeof(EFB_PE_IMAGE_OPTIONAL_HEADER32);
+    nt32->FileHeader.Characteristics = EFB_PE_IMAGE_FILE_EXECUTABLE_IMAGE | EFB_PE_IMAGE_FILE_RELOCS_STRIPPED;
+
+    nt32->OptionalHeader.Magic = 0x10b; /* 32-bit */
+    nt32->OptionalHeader.MajorLinkerVersion = 14;
+    nt32->OptionalHeader.MinorLinkerVersion = 0;
+    nt32->OptionalHeader.SizeOfCode = raw_size;
+    nt32->OptionalHeader.AddressOfEntryPoint = entry_point_rva;
+    nt32->OptionalHeader.BaseOfCode = code_va;
+    nt32->OptionalHeader.BaseOfData = 0;
+    nt32->OptionalHeader.ImageBase = 0x400000;
+    nt32->OptionalHeader.SectionAlignment = section_align;
+    nt32->OptionalHeader.FileAlignment = file_align;
+    nt32->OptionalHeader.MajorOperatingSystemVersion = 6;
+    nt32->OptionalHeader.MinorOperatingSystemVersion = 0;
+    nt32->OptionalHeader.MajorSubsystemVersion = 6;
+    nt32->OptionalHeader.MinorSubsystemVersion = 0;
+    nt32->OptionalHeader.SizeOfImage = size_of_image;
+    nt32->OptionalHeader.SizeOfHeaders = size_of_headers;
+    nt32->OptionalHeader.Subsystem = EFB_PE_IMAGE_SUBSYSTEM_WINDOWS_CUI;
+    nt32->OptionalHeader.NumberOfRvaAndSizes = EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+
+    section = (EFB_PE_IMAGE_SECTION_HEADER *)((unsigned char *)&nt32->OptionalHeader + nt32->FileHeader.SizeOfOptionalHeader);
+    section->Name[0] = '.';
+    section->Name[1] = 't';
+    section->Name[2] = 'e';
+    section->Name[3] = 'x';
+    section->Name[4] = 't';
+    section->Misc.VirtualSize = model->code_size;
+    section->VirtualAddress = code_va;
+    section->SizeOfRawData = raw_size;
+    section->PointerToRawData = size_of_headers;
+    section->Characteristics = EFB_PE_IMAGE_SCN_CNT_CODE | EFB_PE_IMAGE_SCN_MEM_EXECUTE | EFB_PE_IMAGE_SCN_MEM_READ;
+  }
 
   /* === Write Code ===*/
   code_dest = model->out_binary + size_of_headers;

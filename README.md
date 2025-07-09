@@ -11,17 +11,34 @@ For more information please look at the "efb.h" file or take a look at the "exam
 Download or clone efb.h and include it in your project.
 
 ```C
-#include "efb.h"
+#include "efb.h"                /* Executable File Builder */
+#include "efb_platform_write.h" /* Optional: OS-Specific write file implementations */
 
 int main() {
 
     /*
-      mov eax, 0
-      ret
+      Define a X86_64 instruction: mov eax, 0; ret
     */
     unsigned char x86_64_ret[] = {0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3};
 
-    efb_build_executable("ret.exe", x86_64_ret, sizeof(x86_64_ret));
+    /* efb.h does not use File IO and just fills the buffer with the executable file data */
+    #define BINARY_CAPACITY 4096
+    unsigned char binary_buffer[BINARY_CAPACITY];
+
+    efb_model model = {0};
+    model.arch                = EFB_ARCH_X86_64;    /* Specify the target architecture */
+    model.format              = EFB_FORMAT_PE;      /* The executable file format that should be used */
+    model.out_binary          = binary_buffer;      /* User provided buffer to hold executable data */
+    model.out_binary_capacity = BINARY_CAPACITY;    /* The maximum size of the buffer */
+    model.code                = x86_64_ret;         /* The instruction binary */
+    model.code_size           = sizeof(x86_64_ret); /* The size of the instruction binary array */
+
+    /* If efb_build succeeds it fills the out_binary and out_binary_size */
+    if(efb_build(&model)) {
+       /* By default efb itself does not use file IO to stay nostdlib and platform independant */
+       /* If you want a lightweight file write implementation (nostdlib but platform dependant) than "#include "efb_platform_write.h"" */ 
+       efb_platform_write("ret.exe", model.out_binary, model.out_binary_size)
+    }
 
     return 0;
 }

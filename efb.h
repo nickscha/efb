@@ -11,10 +11,6 @@ LICENSE
 #ifndef EFB_H
 #define EFB_H
 
-#include "efb_elf.h"            /* ELF-Format for Linux/Unix/... */
-#include "efb_pe.h"             /* PE-Format for Windows         */
-#include "efb_platform_write.h" /* OS-Specific write file implementations */
-
 /* #############################################################################
  * # COMPILER SETTINGS
  * #############################################################################
@@ -34,18 +30,317 @@ LICENSE
 #define EFB_API static
 #endif
 
+/* ------------------------------------ */
+/* - PE Format Structs (32 & 64 bit)  */
+/* ------------------------------------ */
+#define EFB_PE_IMAGE_FILE_RELOCS_STRIPPED 0x0001
+#define EFB_PE_IMAGE_FILE_EXECUTABLE_IMAGE 0x0002
+#define EFB_PE_IMAGE_FILE_LARGE_ADDRESS_AWARE 0x0020
+#define EFB_PE_IMAGE_NT_OPTIONAL_HDR64_MAGIC 0x20b
+#define EFB_PE_IMAGE_SUBSYSTEM_NATIVE 1
+#define EFB_PE_IMAGE_SUBSYSTEM_WINDOWS_GUI 2
+#define EFB_PE_IMAGE_SUBSYSTEM_WINDOWS_CUI 3
+#define EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
+#define EFB_PE_IMAGE_SCN_CNT_CODE 0x00000020
+#define EFB_PE_IMAGE_SCN_MEM_EXECUTE 0x20000000
+#define EFB_PE_IMAGE_SCN_MEM_READ 0x40000000
+#define EFB_PE_IMAGE_FILE_MACHINE_I386 0x014c
+#define EFB_PE_IMAGE_FILE_MACHINE_ARM64 0xaa64
+#define EFB_PE_IMAGE_FILE_MACHINE_AMD64 0x8664
+
+typedef struct EFB_PE_DOS_HEADER
+{
+  unsigned short e_magic;
+  unsigned short e_cblp;
+  unsigned short e_cp;
+  unsigned short e_crlc;
+  unsigned short e_cparhdr;
+  unsigned short e_minalloc;
+  unsigned short e_maxalloc;
+  unsigned short e_ss;
+  unsigned short e_sp;
+  unsigned short e_csum;
+  unsigned short e_ip;
+  unsigned short e_cs;
+  unsigned short e_lfarlc;
+  unsigned short e_ovno;
+  unsigned short e_res[4];
+  unsigned short e_oemid;
+  unsigned short e_oeminfo;
+  unsigned short e_res2[10];
+  long e_lfanew;
+
+} EFB_PE_DOS_HEADER;
+
+typedef struct EFB_PE_IMAGE_FILE_HEADER
+{
+  unsigned short Machine;
+  unsigned short NumberOfSections;
+  unsigned long TimeDateStamp;
+  unsigned long PointerToSymbolTable;
+  unsigned long NumberOfSymbols;
+  unsigned short SizeOfOptionalHeader;
+  unsigned short Characteristics;
+
+} EFB_PE_IMAGE_FILE_HEADER;
+
+typedef struct EFB_PE_IMAGE_DATA_DIRECTORY
+{
+  unsigned long VirtualAddress;
+  unsigned long Size;
+
+} EFB_PE_IMAGE_DATA_DIRECTORY;
+
+typedef struct EFB_PE_IMAGE_SECTION_HEADER
+{
+  unsigned char Name[8];
+  union
+  {
+    unsigned long PhysicalAddress;
+    unsigned long VirtualSize;
+  } Misc;
+  unsigned long VirtualAddress;
+  unsigned long SizeOfRawData;
+  unsigned long PointerToRawData;
+  unsigned long PointerToRelocations;
+  unsigned long PointerToLinenumbers;
+  unsigned short NumberOfRelocations;
+  unsigned short NumberOfLinenumbers;
+  unsigned long Characteristics;
+} EFB_PE_IMAGE_SECTION_HEADER;
+
+/* --------------------------------- */
+/* - Optional Header (32bit)         */
+/* --------------------------------- */
+typedef struct EFB_PE_IMAGE_OPTIONAL_HEADER32
+{
+  unsigned short Magic;
+  unsigned char MajorLinkerVersion;
+  unsigned char MinorLinkerVersion;
+  unsigned long SizeOfCode;
+  unsigned long SizeOfInitializedData;
+  unsigned long SizeOfUninitializedData;
+  unsigned long AddressOfEntryPoint;
+  unsigned long BaseOfCode;
+  unsigned long BaseOfData;
+  unsigned long ImageBase;
+  unsigned long SectionAlignment;
+  unsigned long FileAlignment;
+  unsigned short MajorOperatingSystemVersion;
+  unsigned short MinorOperatingSystemVersion;
+  unsigned short MajorImageVersion;
+  unsigned short MinorImageVersion;
+  unsigned short MajorSubsystemVersion;
+  unsigned short MinorSubsystemVersion;
+  unsigned long Win32VersionValue;
+  unsigned long SizeOfImage;
+  unsigned long SizeOfHeaders;
+  unsigned long CheckSum;
+  unsigned short Subsystem;
+  unsigned short DllCharacteristics;
+  unsigned long SizeOfStackReserve;
+  unsigned long SizeOfStackCommit;
+  unsigned long SizeOfHeapReserve;
+  unsigned long SizeOfHeapCommit;
+  unsigned long LoaderFlags;
+  unsigned long NumberOfRvaAndSizes;
+  EFB_PE_IMAGE_DATA_DIRECTORY DataDirectory[EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+
+} EFB_PE_IMAGE_OPTIONAL_HEADER32;
+
+typedef struct EFB_PE_IMAGE_NT_HEADERS32
+{
+  unsigned long Signature;
+  EFB_PE_IMAGE_FILE_HEADER FileHeader;
+  EFB_PE_IMAGE_OPTIONAL_HEADER32 OptionalHeader;
+
+} EFB_PE_IMAGE_NT_HEADERS32;
+
+/* --------------------------------- */
+/* - Optional Header (64bit)         */
+/* --------------------------------- */
+typedef struct EFB_PE_IMAGE_OPTIONAL_HEADER64
+{
+  unsigned short Magic;
+  unsigned char MajorLinkerVersion;
+  unsigned char MinorLinkerVersion;
+  unsigned long SizeOfCode;
+  unsigned long SizeOfInitializedData;
+  unsigned long SizeOfUninitializedData;
+  unsigned long AddressOfEntryPoint;
+  unsigned long BaseOfCode;
+  unsigned long ImageBaseLowPart;
+  unsigned long ImageBaseHighPart;
+  unsigned long SectionAlignment;
+  unsigned long FileAlignment;
+  unsigned short MajorOperatingSystemVersion;
+  unsigned short MinorOperatingSystemVersion;
+  unsigned short MajorImageVersion;
+  unsigned short MinorImageVersion;
+  unsigned short MajorSubsystemVersion;
+  unsigned short MinorSubsystemVersion;
+  unsigned long Win32VersionValue;
+  unsigned long SizeOfImage;
+  unsigned long SizeOfHeaders;
+  unsigned long CheckSum;
+  unsigned short Subsystem;
+  unsigned short DllCharacteristics;
+  unsigned long SizeOfStackReserveLowPart;
+  unsigned long SizeOfStackReserveHighPart;
+  unsigned long SizeOfStackCommitLowPart;
+  unsigned long SizeOfStackCommitHighPart;
+  unsigned long SizeOfHeapReserveLowPart;
+  unsigned long SizeOfHeapReserveHighPart;
+  unsigned long SizeOfHeapCommitLowPart;
+  unsigned long SizeOfHeapCommitHighPart;
+  unsigned long LoaderFlags;
+  unsigned long NumberOfRvaAndSizes;
+  EFB_PE_IMAGE_DATA_DIRECTORY DataDirectory[EFB_PE_IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+
+} EFB_PE_IMAGE_OPTIONAL_HEADER64;
+
+typedef struct EFB_PE_IMAGE_NT_HEADERS64
+{
+  unsigned long Signature;
+  EFB_PE_IMAGE_FILE_HEADER FileHeader;
+  EFB_PE_IMAGE_OPTIONAL_HEADER64 OptionalHeader;
+
+} EFB_PE_IMAGE_NT_HEADERS64;
+
+/* ------------------------------------ */
+/* - ELF Format Structs (32 & 64 bit)   */
+/* ------------------------------------ */
+#define EFB_ELF_CODE_VADDR 0x400000 + 0x80
+#define EFB_ELF_ALIGN 0x1000
+
+#define EFB_ELF_MAGIC0 0x7f
+#define EFB_ELF_MAGIC1 'E'
+#define EFB_ELF_MAGIC2 'L'
+#define EFB_ELF_MAGIC3 'F'
+#define EFB_ELF_CLASS32 1
+#define EFB_ELF_CLASS64 2
+#define EFB_ELF_DATA 1 /* little endian */
+#define EFB_ELF_VERSION 1
+#define EFB_ELF_OSABI 0
+#define EFB_ELF_TYPE_EXEC 2
+#define EFB_ELF_MACHINE_386 3
+#define EFB_ELF_MACHINE_X86_64 62
+#define EFB_ELF_MACHINE_AARCH64 183
+#define EFB_ELF_PT_LOAD 1
+#define EFB_ELF_PF_X 1
+#define EFB_ELF_PF_W 2
+#define EFB_ELF_PF_R 4
+
+#define EFB_ELF_IDENT_SIZE 16
+
+/* ELF32 Header (Executable + Linkable Format) */
+typedef struct EFB_ELF32_EHDR
+{
+  unsigned char e_ident[EFB_ELF_IDENT_SIZE]; /* Magic number and other info */
+  unsigned short e_type;                     /* Object file type */
+  unsigned short e_machine;                  /* Architecture */
+  unsigned int e_version;                    /* Object file version */
+  unsigned int e_entry;                      /* Entry point virtual address */
+  unsigned int e_phoff;                      /* Program header table file offset */
+  unsigned int e_shoff;                      /* Section header table file offset */
+  unsigned int e_flags;                      /* Processor-specific flags */
+  unsigned short e_ehsize;                   /* ELF header size in bytes */
+  unsigned short e_phentsize;                /* Program header table entry size */
+  unsigned short e_phnum;                    /* Program header table entry count */
+  unsigned short e_shentsize;                /* Section header table entry size */
+  unsigned short e_shnum;                    /* Section header table entry count */
+  unsigned short e_shstrndx;                 /* Section header string table index */
+
+} EFB_ELF32_EHDR;
+
+/* ELF32 Program Header */
+typedef struct EFB_ELF32_PHDR
+{
+  unsigned int p_type;   /* Segment type */
+  unsigned int p_offset; /* Segment file offset */
+  unsigned int p_vaddr;  /* Segment virtual address */
+  unsigned int p_paddr;  /* Segment physical address */
+  unsigned int p_filesz; /* Segment size in file */
+  unsigned int p_memsz;  /* Segment size in memory */
+  unsigned int p_flags;  /* Segment flags */
+  unsigned int p_align;  /* Segment alignment */
+
+} EFB_ELF32_PHDR;
+
+/* Section header (not required for minimal executables) */
+typedef struct EFB_ELF32_SHDR
+{
+  unsigned int sh_name;      /* Offset to section name in the section header string table */
+  unsigned int sh_type;      /* Section type (e.g., SHT_PROGBITS, SHT_SYMTAB) */
+  unsigned int sh_flags;     /* Section attributes/flags (e.g., SHF_WRITE, SHF_ALLOC) */
+  unsigned int sh_addr;      /* Virtual address in memory where the section will reside */
+  unsigned int sh_offset;    /* Offset in the file where the section starts */
+  unsigned int sh_size;      /* Size of the section in bytes */
+  unsigned int sh_link;      /* Section index of a related section (e.g., symbol table link) */
+  unsigned int sh_info;      /* Extra information (usage varies by section type) */
+  unsigned int sh_addralign; /* Required alignment of the section in memory */
+  unsigned int sh_entsize;   /* Size of each entry for sections with fixed-size entries (e.g., symbol tables) */
+
+} EFB_ELF32_SHDR;
+
+typedef struct EFB_ELF64_EHDR
+{
+  unsigned char e_ident[EFB_ELF_IDENT_SIZE]; /* ELF identification bytes (magic number, architecture, etc.) */
+  unsigned short e_type;                     /* Object file type (e.g., ET_EXEC for executable) */
+  unsigned short e_machine;                  /* Target architecture (e.g., EM_X86_64, EM_AARCH64) */
+  unsigned int e_version;                    /* Object file version (usually 1) */
+  unsigned long e_entry;                     /* Entry point virtual address for the program */
+  unsigned long e_phoff;                     /* Offset to the program header table in the file */
+  unsigned long e_shoff;                     /* Offset to the section header table in the file */
+  unsigned int e_flags;                      /* Processor-specific flags */
+  unsigned short e_ehsize;                   /* Size of this ELF header */
+  unsigned short e_phentsize;                /* Size of one entry in the program header table */
+  unsigned short e_phnum;                    /* Number of entries in the program header table */
+  unsigned short e_shentsize;                /* Size of one entry in the section header table */
+  unsigned short e_shnum;                    /* Number of entries in the section header table */
+  unsigned short e_shstrndx;                 /* Index of the section header string table */
+
+} EFB_ELF64_EHDR;
+
+typedef struct EFB_ELF64_PHDR
+{
+  unsigned int p_type;    /* Segment type (e.g., PT_LOAD for loadable segment) */
+  unsigned int p_flags;   /* Segment flags (e.g., PF_R, PF_W, PF_X) */
+  unsigned long p_offset; /* Offset in the file where the segment begins */
+  unsigned long p_vaddr;  /* Virtual address of the segment in memory */
+  unsigned long p_paddr;  /* Physical address (not usually used on modern systems) */
+  unsigned long p_filesz; /* Size of the segment in the file */
+  unsigned long p_memsz;  /* Size of the segment in memory */
+  unsigned long p_align;  /* Alignment of the segment in memory and file */
+
+} EFB_ELF64_PHDR;
+
+typedef struct EFB_ELF64_SHDR
+{
+  unsigned int sh_name;       /* Section name (string table index) */
+  unsigned int sh_type;       /* Section type */
+  unsigned long sh_flags;     /* Section flags */
+  unsigned long sh_addr;      /* Section virtual address at execution */
+  unsigned long sh_offset;    /* Section file offset */
+  unsigned long sh_size;      /* Section size in bytes */
+  unsigned int sh_link;       /* Link to another section */
+  unsigned int sh_info;       /* Additional section information */
+  unsigned long sh_addralign; /* Section alignment */
+  unsigned long sh_entsize;   /* Entry size if section holds table */
+
+} EFB_ELF64_SHDR;
+
 typedef enum efb_arch
 {
   EFB_ARCH_X86_64,
-  EFB_ARCH_X86_32,
   EFB_ARCH_AARCH64
 
 } efb_arch;
 
 typedef enum efb_format
 {
-  EFB_FORMAT_ELF,
-  EFB_FORMAT_PE
+  EFB_FORMAT_PE,
+  EFB_FORMAT_ELF
 
 } efb_format;
 
@@ -57,7 +352,7 @@ typedef struct efb_model
   unsigned long code_size;           /* Size of machine code */
   unsigned char *out_binary;         /* Output buffer for executable */
   unsigned long out_binary_capacity; /* Capacity of output buffer */
-  unsigned long *out_binary_size;    /* Pointer to store actual size */
+  unsigned long out_binary_size;     /* Actual size of output */
 
 } efb_model;
 
@@ -71,10 +366,6 @@ typedef int efb_bool;
 #define false 0
 #endif
 
-#ifndef EFB_MAX_EXECUTABLE_SIZE
-#define EFB_MAX_EXECUTABLE_SIZE 8192
-#endif
-
 #define EFB_ALIGN_UP(val, align) (((val) + (align) - 1) & ~((align) - 1))
 
 EFB_API EFB_INLINE void efb_zero_memory(unsigned char *buffer, unsigned long size)
@@ -86,7 +377,7 @@ EFB_API EFB_INLINE void efb_zero_memory(unsigned char *buffer, unsigned long siz
   }
 }
 
-EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *text_section, unsigned long text_section_size)
+EFB_API EFB_INLINE efb_bool efb_build_elf(efb_model *model)
 {
   efb_bool ended = false;
 
@@ -97,26 +388,20 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *te
   unsigned char *code_dest;
 
   unsigned long code_offset = 0x80;
-  unsigned long file_size = code_offset + text_section_size;
-
-  unsigned char elf_buffer[EFB_MAX_EXECUTABLE_SIZE];
-
-  if (!out_file_name || !text_section)
-  {
-    return (ended);
-  }
+  unsigned long file_size = code_offset + model->code_size;
 
   /* Fail if file_size exceeds static buffer*/
-  if (file_size > EFB_MAX_EXECUTABLE_SIZE)
+  if (file_size > model->out_binary_capacity)
   {
     return (ended);
   }
 
-  efb_zero_memory(elf_buffer, sizeof(elf_buffer));
+  efb_zero_memory(model->out_binary, file_size);
+  model->out_binary_size = 0;
 
-  ehdr = (EFB_ELF64_EHDR *)elf_buffer;
-  phdr = (EFB_ELF64_PHDR *)(elf_buffer + sizeof(EFB_ELF64_EHDR));
-  code_dest = elf_buffer + 0x80;
+  ehdr = (EFB_ELF64_EHDR *)model->out_binary;
+  phdr = (EFB_ELF64_PHDR *)(model->out_binary + sizeof(EFB_ELF64_EHDR));
+  code_dest = model->out_binary + 0x80;
 
   ehdr->e_ident[0] = EFB_ELF_MAGIC0;
   ehdr->e_ident[1] = EFB_ELF_MAGIC1;
@@ -128,7 +413,7 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *te
   ehdr->e_ident[7] = EFB_ELF_OSABI;
 
   ehdr->e_type = EFB_ELF_TYPE_EXEC;
-  ehdr->e_machine = EFB_ELF_MACHINE_X86_64;
+  ehdr->e_machine = model->arch == EFB_ARCH_X86_64 ? EFB_ELF_MACHINE_X86_64 : EFB_ELF_MACHINE_AARCH64;
   ehdr->e_version = EFB_ELF_VERSION;
   ehdr->e_entry = EFB_ELF_CODE_VADDR;
   ehdr->e_phoff = sizeof(EFB_ELF64_EHDR);
@@ -141,35 +426,34 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *te
   phdr->p_offset = 0x0;
   phdr->p_vaddr = 0x400000;
   phdr->p_paddr = 0x400000;
-  phdr->p_filesz = 0x80 + text_section_size;
-  phdr->p_memsz = 0x80 + text_section_size;
+  phdr->p_filesz = 0x80 + model->code_size;
+  phdr->p_memsz = 0x80 + model->code_size;
   phdr->p_align = EFB_ELF_ALIGN;
 
   /* Write code */
-  for (i = 0; i < text_section_size; ++i)
+  for (i = 0; i < model->code_size; ++i)
   {
-    code_dest[i] = text_section[i];
+    code_dest[i] = model->code[i];
   }
 
-  /* === Write to File === */
-  return efb_platform_write(out_file_name, elf_buffer, file_size);
+  model->out_binary_size = file_size;
+
+  return true;
 }
 
-EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned char *text_section, unsigned long text_section_size)
+EFB_API EFB_INLINE efb_bool efb_build_pe(efb_model *model)
 {
-  unsigned char efb_buffer[EFB_MAX_EXECUTABLE_SIZE];
-
   /* Constants */
   unsigned long file_align = 0x200;
   unsigned long section_align = 0x1000;
   unsigned long code_va = 0x1000;
   unsigned long entry_point_rva = code_va;
-  unsigned short machine_type = EFB_PE_IMAGE_FILE_MACHINE_AMD64;
+  unsigned short machine_type = model->arch == EFB_ARCH_X86_64 ? EFB_PE_IMAGE_FILE_MACHINE_AMD64 : EFB_PE_IMAGE_FILE_MACHINE_ARM64;
 
   /* Header sizes */
   long nt_headers_offset = 0x40;
-  unsigned long raw_size = EFB_ALIGN_UP(text_section_size, file_align);
-  unsigned long virtual_size = EFB_ALIGN_UP(text_section_size, section_align);
+  unsigned long raw_size = EFB_ALIGN_UP(model->code_size, file_align);
+  unsigned long virtual_size = EFB_ALIGN_UP(model->code_size, section_align);
   unsigned long size_of_headers = EFB_ALIGN_UP(0x200, file_align);
   unsigned long size_of_image = EFB_ALIGN_UP(code_va + virtual_size, section_align);
   unsigned long file_size = size_of_headers + raw_size;
@@ -183,26 +467,22 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
 
   efb_bool ended = false;
 
-  if (!out_file_name || !text_section)
-  {
-    return (ended);
-  }
-
   /* Fail if file_size exceeds static buffer*/
-  if (file_size > EFB_MAX_EXECUTABLE_SIZE)
+  if (file_size > model->out_binary_capacity)
   {
     return (ended);
   }
 
-  efb_zero_memory(efb_buffer, file_size);
+  efb_zero_memory(model->out_binary, file_size);
+  model->out_binary_size = 0;
 
   /* === DOS Header === */
-  dos = (EFB_PE_DOS_HEADER *)efb_buffer;
+  dos = (EFB_PE_DOS_HEADER *)model->out_binary;
   dos->e_magic = 0x5A4D; /* 'MZ' */
   dos->e_lfanew = nt_headers_offset;
 
   /* === NT Headers === */
-  nt = (EFB_PE_IMAGE_NT_HEADERS64 *)(efb_buffer + nt_headers_offset);
+  nt = (EFB_PE_IMAGE_NT_HEADERS64 *)(model->out_binary + nt_headers_offset);
   nt->Signature = 0x00004550; /* 'PE\0\0' */
 
   nt->FileHeader.Machine = machine_type;
@@ -236,27 +516,42 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
   section->Name[2] = 'e';
   section->Name[3] = 'x';
   section->Name[4] = 't';
-  section->Misc.VirtualSize = text_section_size;
+  section->Misc.VirtualSize = model->code_size;
   section->VirtualAddress = code_va;
   section->SizeOfRawData = raw_size;
   section->PointerToRawData = size_of_headers;
   section->Characteristics = EFB_PE_IMAGE_SCN_CNT_CODE | EFB_PE_IMAGE_SCN_MEM_EXECUTE | EFB_PE_IMAGE_SCN_MEM_READ;
 
   /* === Write Code ===*/
-  code_dest = efb_buffer + size_of_headers;
-  for (i = 0; i < text_section_size; ++i)
+  code_dest = model->out_binary + size_of_headers;
+  for (i = 0; i < model->code_size; ++i)
   {
-    code_dest[i] = text_section[i];
+    code_dest[i] = model->code[i];
   }
 
-  /* === Write to File === */
-  return efb_platform_write(out_file_name, efb_buffer, file_size);
+  model->out_binary_size = file_size;
+
+  return true;
 }
 
 EFB_API EFB_INLINE efb_bool efb_build(efb_model *model)
 {
-  (void)model;
-  return true;
+  if (!model->code)
+  {
+    return false;
+  }
+
+  switch (model->format)
+  {
+  case EFB_FORMAT_PE:
+    return efb_build_pe(model);
+  case EFB_FORMAT_ELF:
+    return efb_build_elf(model);
+  default:
+    break;
+  }
+
+  return false;
 }
 
 #endif /* EFB_H */

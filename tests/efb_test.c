@@ -10,7 +10,8 @@ LICENSE
   See end of file for detailed license information.
 
 */
-#include "../efb.h"
+#include "../efb.h"                /* Executable File Builder */
+#include "../efb_platform_write.h" /* Optional: OS-Specific write file implementations */
 
 #include "test.h" /* Simple Testing framework */
 
@@ -43,19 +44,39 @@ int main(void)
   */
   unsigned char machine_code_debug[] = {0xCC, 0xEB, 0xFE};
 
-  /* Build ELF-Format */
-  assert(efb_build_elf("ret_undefined.out", machine_code_ret_undefined, sizeof(machine_code_ret_undefined)));
-  assert(efb_build_elf("ret_valid.out", machine_code_ret_valid, sizeof(machine_code_ret_valid)));
-  assert(efb_build_elf("ud2.out", machine_code_ud2, sizeof(machine_code_ud2)));
-  assert(efb_build_elf("infinite_loop.out", machine_code_infinite_loop, sizeof(machine_code_infinite_loop)));
-  assert(efb_build_elf("debug.out", machine_code_debug, sizeof(machine_code_debug)));
+#define BINARY_CAPACITY 4096
+  unsigned char binary_buffer[BINARY_CAPACITY];
 
-  /* Build PE-Format */
-  assert(efb_build_executable("ret_undefined.exe", machine_code_ret_undefined, sizeof(machine_code_ret_undefined)));
-  assert(efb_build_executable("ret_valid.exe", machine_code_ret_valid, sizeof(machine_code_ret_valid)));
-  assert(efb_build_executable("ud2.exe", machine_code_ud2, sizeof(machine_code_ud2)));
-  assert(efb_build_executable("infinite_loop.exe", machine_code_infinite_loop, sizeof(machine_code_infinite_loop)));
-  assert(efb_build_executable("debug.exe", machine_code_debug, sizeof(machine_code_debug)));
+  efb_model model = {0};
+  model.arch = EFB_ARCH_X86_64;
+  model.format = EFB_FORMAT_PE;
+  model.out_binary = binary_buffer;
+  model.out_binary_capacity = BINARY_CAPACITY;
+  model.code = machine_code_ret_undefined;
+  model.code_size = sizeof(machine_code_ret_undefined);
+
+  assert(efb_build(&model));
+  assert(efb_platform_write("ret_undefined.exe", model.out_binary, model.out_binary_size));
+
+  model.code = machine_code_ret_valid;
+  model.code_size = sizeof(machine_code_ret_valid);
+  assert(efb_build(&model));
+  assert(efb_platform_write("ret_valid.exe", model.out_binary, model.out_binary_size));
+
+  model.code = machine_code_ud2;
+  model.code_size = sizeof(machine_code_ud2);
+  assert(efb_build(&model));
+  assert(efb_platform_write("ud2.exe", model.out_binary, model.out_binary_size));
+
+  model.code = machine_code_infinite_loop;
+  model.code_size = sizeof(machine_code_infinite_loop);
+  assert(efb_build(&model));
+  assert(efb_platform_write("infinite_loop.exe", model.out_binary, model.out_binary_size));
+
+  model.code = machine_code_debug;
+  model.code_size = sizeof(machine_code_debug);
+  assert(efb_build(&model));
+  assert(efb_platform_write("debug.exe", model.out_binary, model.out_binary_size));
 
   return 0;
 }

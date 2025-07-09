@@ -19,13 +19,14 @@ LICENSE
   See end of file for detailed license information.
 
 */
-#include "../efb.h"
+#include "../efb.h"                /* Executable File Builder */
+#include "../efb_platform_write.h" /* Optional: OS-Specific write file implementations */
 
-#define assert(expression)      \
-    if (!(expression))          \
-    {                           \
-        *(volatile int *)0 = 0; \
-    }
+#define assert(expression)  \
+  if (!(expression))        \
+  {                         \
+    *(volatile int *)0 = 0; \
+  }
 
 #ifdef __clang__
 #elif __GNUC__
@@ -37,15 +38,27 @@ __attribute((force_align_arg_pointer))
 int
 mainCRTStartup(void)
 {
-    /*
-      mov eax, 0;
-      ret
-    */
-    unsigned char x86_64_ret[] = {0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3};
+  /*
+    mov eax, 0;
+    ret
+  */
+  unsigned char x86_64_ret[] = {0xB8, 0x00, 0x00, 0x00, 0x00, 0xC3};
 
-    assert(efb_build_executable("ret.exe", x86_64_ret, sizeof(x86_64_ret)));
+#define BINARY_CAPACITY 4096
+  unsigned char binary_buffer[BINARY_CAPACITY];
 
-    return 0;
+  efb_model model = {0};
+  model.arch = EFB_ARCH_X86_64;
+  model.format = EFB_FORMAT_PE;
+  model.out_binary = binary_buffer;
+  model.out_binary_capacity = BINARY_CAPACITY;
+  model.code = x86_64_ret;
+  model.code_size = sizeof(x86_64_ret);
+
+  assert(efb_build(&model));
+  assert(efb_platform_write("ret.exe", model.out_binary, model.out_binary_size));
+
+  return 0;
 }
 
 /*

@@ -1,7 +1,11 @@
 # efb
 A C89 standard compliant, single header, nostdlib (no C Standard Library) executable file/format builder (EFB).
 
-EFB can build/write the executable files/formats platform independant (e.g. on Linux you can also build PE, .. formats and vice versa).
+EFB can build/write the executable 32 and 64bit files/formats platform independant (e.g. on Linux you can also build PE, .. formats and vice versa).
+
+<p align="center">
+<a href="https://github.com/nickscha/efb"><img src="assets/efb.png"></a>
+</p>
 
 For more information please look at the "efb.h" file or take a look at the "examples" or "tests" folder.
 

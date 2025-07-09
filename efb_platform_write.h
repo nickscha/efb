@@ -16,6 +16,25 @@ LICENSE
 #ifndef EFB_PLATFORM_WRITE_H
 #define EFB_PLATFORM_WRITE_H
 
+/* #############################################################################
+ * # COMPILER SETTINGS
+ * #############################################################################
+ */
+/* Check if using C99 or later (inline is supported) */
+#if __STDC_VERSION__ >= 199901L
+#define EFB_PLATFORM_INLINE inline
+#define EFB_PLATFORM_API extern
+#elif defined(__GNUC__) || defined(__clang__)
+#define EFB_PLATFORM_INLINE __inline__
+#define EFB_PLATFORM_API static
+#elif defined(_MSC_VER)
+#define EFB_PLATFORM_INLINE __inline
+#define EFB_PLATFORM_API static
+#else
+#define EFB_PLATFORM_INLINE
+#define EFB_PLATFORM_API static
+#endif
+
 #ifdef _WIN32
 #define EFB_WIN32_GENERIC_WRITE (0x40000000L)
 #define EFB_WIN32_CREATE_ALWAYS 2
@@ -47,7 +66,7 @@ WriteFile(
 
 #endif /* _WINDOWS_   */
 
-static int efb_platform_write(char *filename, unsigned char *buffer, unsigned long size)
+EFB_PLATFORM_API EFB_PLATFORM_INLINE int efb_platform_write(char *filename, unsigned char *buffer, unsigned long size)
 {
     void *hFile;
     unsigned long bytes_written;
@@ -67,7 +86,7 @@ static int efb_platform_write(char *filename, unsigned char *buffer, unsigned lo
 #include <sys/types.h>
 #include <sys/stat.h>
 
-static int efb_platform_write(char *filename, unsigned char *buffer, unsigned long size)
+EFB_PLATFORM_API EFB_PLATFORM_INLINE int efb_platform_write(char *filename, unsigned char *buffer, unsigned long size)
 {
     int fd;
     ssize_t written;

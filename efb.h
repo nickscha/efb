@@ -540,13 +540,29 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(efb_model *model)
   efb_bool ended = false;
 
   unsigned long i;
-
-  EFB_ELF64_EHDR *ehdr;
-  EFB_ELF64_PHDR *phdr;
   unsigned char *code_dest;
 
   unsigned long code_offset = 0x80;
   unsigned long file_size = code_offset + model->code_size;
+
+  unsigned short machine_type;
+  efb_bool is_64 = true;
+
+  switch (model->arch)
+  {
+  case EFB_ARCH_I386:
+    machine_type = EFB_ELF_MACHINE_386;
+    is_64 = false;
+    break;
+  case EFB_ARCH_X86_64:
+    machine_type = EFB_ELF_MACHINE_X86_64;
+    break;
+  case EFB_ARCH_AARCH64:
+    machine_type = EFB_ELF_MACHINE_AARCH64;
+    break;
+  default:
+    return ended;
+  }
 
   /* Fail if file_size exceeds static buffer*/
   if (file_size > model->out_binary_capacity)
@@ -557,36 +573,78 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(efb_model *model)
   efb_zero_memory(model->out_binary, file_size);
   model->out_binary_size = 0;
 
-  ehdr = (EFB_ELF64_EHDR *)model->out_binary;
-  phdr = (EFB_ELF64_PHDR *)(model->out_binary + sizeof(EFB_ELF64_EHDR));
-  code_dest = model->out_binary + 0x80;
+  if (is_64)
+  {
+    EFB_ELF64_EHDR *ehdr = (EFB_ELF64_EHDR *)model->out_binary;
+    EFB_ELF64_PHDR *phdr = (EFB_ELF64_PHDR *)(model->out_binary + sizeof(EFB_ELF64_EHDR));
 
-  ehdr->e_ident[0] = EFB_ELF_MAGIC0;
-  ehdr->e_ident[1] = EFB_ELF_MAGIC1;
-  ehdr->e_ident[2] = EFB_ELF_MAGIC2;
-  ehdr->e_ident[3] = EFB_ELF_MAGIC3;
-  ehdr->e_ident[4] = EFB_ELF_CLASS64;
-  ehdr->e_ident[5] = EFB_ELF_DATA;
-  ehdr->e_ident[6] = EFB_ELF_VERSION;
-  ehdr->e_ident[7] = EFB_ELF_OSABI;
+    efb_zero_memory((unsigned char *)ehdr, sizeof(EFB_ELF64_EHDR));
+    efb_zero_memory((unsigned char *)phdr, sizeof(EFB_ELF64_PHDR));
 
-  ehdr->e_type = EFB_ELF_TYPE_EXEC;
-  ehdr->e_machine = model->arch == EFB_ARCH_X86_64 ? EFB_ELF_MACHINE_X86_64 : EFB_ELF_MACHINE_AARCH64;
-  ehdr->e_version = EFB_ELF_VERSION;
-  ehdr->e_entry = EFB_ELF_CODE_VADDR;
-  ehdr->e_phoff = sizeof(EFB_ELF64_EHDR);
-  ehdr->e_ehsize = sizeof(EFB_ELF64_EHDR);
-  ehdr->e_phentsize = sizeof(EFB_ELF64_PHDR);
-  ehdr->e_phnum = 1;
+    code_dest = model->out_binary + 0x80;
 
-  phdr->p_type = EFB_ELF_PT_LOAD;
-  phdr->p_flags = EFB_ELF_PF_R | EFB_ELF_PF_X;
-  phdr->p_offset = 0x0;
-  phdr->p_vaddr = 0x400000;
-  phdr->p_paddr = 0x400000;
-  phdr->p_filesz = 0x80 + model->code_size;
-  phdr->p_memsz = 0x80 + model->code_size;
-  phdr->p_align = EFB_ELF_ALIGN;
+    ehdr->e_ident[0] = EFB_ELF_MAGIC0;
+    ehdr->e_ident[1] = EFB_ELF_MAGIC1;
+    ehdr->e_ident[2] = EFB_ELF_MAGIC2;
+    ehdr->e_ident[3] = EFB_ELF_MAGIC3;
+    ehdr->e_ident[4] = EFB_ELF_CLASS64;
+    ehdr->e_ident[5] = EFB_ELF_DATA;
+    ehdr->e_ident[6] = EFB_ELF_VERSION;
+    ehdr->e_ident[7] = EFB_ELF_OSABI;
+
+    ehdr->e_type = EFB_ELF_TYPE_EXEC;
+    ehdr->e_machine = machine_type;
+    ehdr->e_version = EFB_ELF_VERSION;
+    ehdr->e_entry = EFB_ELF_CODE_VADDR;
+    ehdr->e_phoff = sizeof(EFB_ELF64_EHDR);
+    ehdr->e_ehsize = sizeof(EFB_ELF64_EHDR);
+    ehdr->e_phentsize = sizeof(EFB_ELF64_PHDR);
+    ehdr->e_phnum = 1;
+
+    phdr->p_type = EFB_ELF_PT_LOAD;
+    phdr->p_flags = EFB_ELF_PF_R | EFB_ELF_PF_X;
+    phdr->p_offset = 0x0;
+    phdr->p_vaddr = 0x400000;
+    phdr->p_paddr = 0x400000;
+    phdr->p_filesz = 0x80 + model->code_size;
+    phdr->p_memsz = 0x80 + model->code_size;
+    phdr->p_align = EFB_ELF_ALIGN;
+  }
+  else
+  {
+    EFB_ELF32_EHDR *ehdr = (EFB_ELF32_EHDR *)model->out_binary;
+    EFB_ELF32_PHDR *phdr = (EFB_ELF32_PHDR *)(model->out_binary + sizeof(EFB_ELF32_EHDR));
+
+    efb_zero_memory((unsigned char *)ehdr, sizeof(EFB_ELF32_EHDR));
+    efb_zero_memory((unsigned char *)phdr, sizeof(EFB_ELF32_PHDR));
+
+    ehdr->e_ident[0] = EFB_ELF_MAGIC0;
+    ehdr->e_ident[1] = EFB_ELF_MAGIC1;
+    ehdr->e_ident[2] = EFB_ELF_MAGIC2;
+    ehdr->e_ident[3] = EFB_ELF_MAGIC3;
+    ehdr->e_ident[4] = EFB_ELF_CLASS32;
+    ehdr->e_ident[5] = EFB_ELF_DATA;
+    ehdr->e_ident[6] = EFB_ELF_VERSION;
+    ehdr->e_ident[7] = EFB_ELF_OSABI;
+
+    ehdr->e_type = EFB_ELF_TYPE_EXEC;
+    ehdr->e_machine = EFB_ELF_MACHINE_386;
+    ehdr->e_version = 1;
+    ehdr->e_entry = EFB_ELF_CODE_VADDR;
+    ehdr->e_phoff = sizeof(EFB_ELF32_EHDR);
+    ehdr->e_ehsize = sizeof(EFB_ELF32_EHDR);
+    ehdr->e_phentsize = sizeof(EFB_ELF32_PHDR);
+    ehdr->e_phnum = 1;
+
+    phdr->p_type = EFB_ELF_PT_LOAD;
+    phdr->p_offset = code_offset;
+    phdr->p_vaddr = EFB_ELF_CODE_VADDR;
+    phdr->p_paddr = EFB_ELF_CODE_VADDR;
+    phdr->p_filesz = model->code_size;
+    phdr->p_memsz = model->code_size;
+    phdr->p_flags = EFB_ELF_PF_R | EFB_ELF_PF_X;
+    phdr->p_align = EFB_ELF_ALIGN;
+  }
 
   /* Write code */
   for (i = 0; i < model->code_size; ++i)

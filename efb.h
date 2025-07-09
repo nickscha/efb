@@ -11,8 +11,9 @@ LICENSE
 #ifndef EFB_H
 #define EFB_H
 
-#include "efb_elf.h" /* ELF-Format for Linux/Unix/... */
-#include "efb_pe.h"  /* PE-Format for Windows         */
+#include "efb_elf.h"            /* ELF-Format for Linux/Unix/... */
+#include "efb_pe.h"             /* PE-Format for Windows         */
+#include "efb_platform_write.h" /* OS-Specific write file implementations */
 
 /* #############################################################################
  * # COMPILER SETTINGS
@@ -63,8 +64,6 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *te
   efb_bool ended = false;
 
   unsigned long i;
-  void *hFile;
-  unsigned long bytes_written = 0;
 
   EFB_ELF64_EHDR *ehdr;
   EFB_ELF64_PHDR *phdr;
@@ -126,19 +125,12 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(char *out_file_name, unsigned char *te
   }
 
   /* === Write to File === */
-  hFile = CreateFileA(out_file_name, EFB_WIN32_GENERIC_WRITE, 0, 0, EFB_WIN32_CREATE_ALWAYS, EFB_WIN32_FILE_ATTRIBUTE_NORMAL, 0);
-  ended = (WriteFile(hFile, elf_buffer, file_size, &bytes_written, 0) != 0) && (bytes_written == file_size);
-  ended = CloseHandle(hFile);
-
-  return (ended);
+  return efb_platform_write(out_file_name, elf_buffer, file_size);
 }
 
 EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned char *text_section, unsigned long text_section_size)
 {
   unsigned char efb_buffer[EFB_MAX_EXECUTABLE_SIZE];
-
-  void *hFile;
-  unsigned long bytes_written;
 
   /* Constants */
   unsigned long file_align = 0x200;
@@ -231,11 +223,7 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
   }
 
   /* === Write to File === */
-  hFile = CreateFileA(out_file_name, EFB_WIN32_GENERIC_WRITE, 0, 0, EFB_WIN32_CREATE_ALWAYS, EFB_WIN32_FILE_ATTRIBUTE_NORMAL, 0);
-  ended = (WriteFile(hFile, efb_buffer, file_size, &bytes_written, 0) != 0) && (bytes_written == file_size);
-  ended = CloseHandle(hFile);
-
-  return (ended);
+  return efb_platform_write(out_file_name, efb_buffer, file_size);
 }
 
 #endif /* EFB_H */

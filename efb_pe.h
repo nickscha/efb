@@ -188,41 +188,6 @@ typedef struct EFB_PE_IMAGE_SECTION_HEADER
     unsigned long Characteristics;
 } EFB_PE_IMAGE_SECTION_HEADER;
 
-/* --------------------------------- */
-/* - WIN32 File API                  */
-/* --------------------------------- */
-#ifdef _WIN32
-#define EFB_WIN32_GENERIC_WRITE (0x40000000L)
-#define EFB_WIN32_CREATE_ALWAYS 2
-#define EFB_WIN32_FILE_ATTRIBUTE_NORMAL 0x00000080
-
-#ifndef _WINDOWS_
-
-#define EFB_WIN32_API(r) __declspec(dllimport) r __stdcall
-
-EFB_WIN32_API(int)
-CloseHandle(void *hObject);
-
-EFB_WIN32_API(void *)
-CreateFileA(
-    const char *lpFileName,
-    unsigned long dwDesiredAccess,
-    unsigned long dwShareMode,
-    void *,
-    unsigned long dwCreationDisposition,
-    unsigned long dwFlagsAndAttributes,
-    void *hTemplateFile);
-
-EFB_WIN32_API(int)
-WriteFile(
-    void *hFile,
-    const void *lpBuffer,
-    unsigned long nNumberOfBytesToWrite,
-    unsigned long *lpNumberOfBytesWritten,
-    void *lpOverlapped);
-
-#endif /* _WINDOWS_   */
-#endif /* _WIN32      */
 #endif /* EFB_PE_H */
 
 /*

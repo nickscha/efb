@@ -637,11 +637,11 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(efb_model *model)
     ehdr->e_phnum = 1;
 
     phdr->p_type = EFB_ELF_PT_LOAD;
-    phdr->p_offset = code_offset;
+    phdr->p_offset = (unsigned int)code_offset;
     phdr->p_vaddr = EFB_ELF_CODE_VADDR;
     phdr->p_paddr = EFB_ELF_CODE_VADDR;
-    phdr->p_filesz = model->code_size;
-    phdr->p_memsz = model->code_size;
+    phdr->p_filesz = (unsigned int)model->code_size;
+    phdr->p_memsz = (unsigned int)model->code_size;
     phdr->p_flags = EFB_ELF_PF_R | EFB_ELF_PF_X;
     phdr->p_align = EFB_ELF_ALIGN;
   }

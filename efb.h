@@ -333,14 +333,16 @@ typedef struct EFB_ELF64_SHDR
 typedef enum efb_arch
 {
   EFB_ARCH_X86_64,
-  EFB_ARCH_AARCH64
+  EFB_ARCH_AARCH64,
+  EFB_ARCH_COUNT
 
 } efb_arch;
 
 typedef enum efb_format
 {
   EFB_FORMAT_PE,
-  EFB_FORMAT_ELF
+  EFB_FORMAT_ELF,
+  EFB_FORMAT_COUNT
 
 } efb_format;
 

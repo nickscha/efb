@@ -628,7 +628,7 @@ EFB_API EFB_INLINE efb_bool efb_build_elf(efb_model *model)
     ehdr->e_ident[7] = EFB_ELF_OSABI;
 
     ehdr->e_type = EFB_ELF_TYPE_EXEC;
-    ehdr->e_machine = EFB_ELF_MACHINE_386;
+    ehdr->e_machine = machine_type;
     ehdr->e_version = 1;
     ehdr->e_entry = EFB_ELF_CODE_VADDR;
     ehdr->e_phoff = sizeof(EFB_ELF32_EHDR);

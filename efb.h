@@ -330,6 +330,14 @@ typedef struct EFB_ELF64_SHDR
 
 } EFB_ELF64_SHDR;
 
+/* ------------------------------------ */
+/* - MACH-O Format Structs (32 & 64 bit)*/
+/* ------------------------------------ */
+
+
+/* ------------------------------------ */
+/* - EFB Model Structures               */
+/* ------------------------------------ */
 typedef enum efb_arch
 {
   EFB_ARCH_I386,
@@ -343,6 +351,7 @@ typedef enum efb_format
 {
   EFB_FORMAT_PE,
   EFB_FORMAT_ELF,
+  EFB_FORMAT_MACHO,
   EFB_FORMAT_COUNT
 
 } efb_format;

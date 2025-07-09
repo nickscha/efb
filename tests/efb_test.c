@@ -94,13 +94,19 @@ void efb_test_build_executables(efb_arch arch, efb_format format, efb_machine_co
     }
 
     /* Append suffix based on format */
-    if (model.format == EFB_FORMAT_PE)
+    switch (model.format)
     {
+    case EFB_FORMAT_PE:
       EFB_APPEND_SUFFIX(filename, ".exe");
-    }
-    else
-    {
+      break;
+    case EFB_FORMAT_ELF:
       EFB_APPEND_SUFFIX(filename, ".out");
+      break;
+    case EFB_FORMAT_MACHO:
+      EFB_APPEND_SUFFIX(filename, ".o");
+      break;
+    default:
+      break;
     }
 
     assert(efb_platform_write(filename, model.out_binary, model.out_binary_size));

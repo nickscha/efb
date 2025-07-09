@@ -34,6 +34,33 @@ LICENSE
 #define EFB_API static
 #endif
 
+typedef enum efb_arch
+{
+  EFB_ARCH_X86_64,
+  EFB_ARCH_X86_32,
+  EFB_ARCH_AARCH64
+
+} efb_arch;
+
+typedef enum efb_format
+{
+  EFB_FORMAT_ELF,
+  EFB_FORMAT_PE
+
+} efb_format;
+
+typedef struct efb_model
+{
+  efb_arch arch;                     /* Target architecture */
+  efb_format format;                 /* Executable format */
+  unsigned char *code;               /* Pointer to machine code */
+  unsigned long code_size;           /* Size of machine code */
+  unsigned char *out_binary;         /* Output buffer for executable */
+  unsigned long out_binary_capacity; /* Capacity of output buffer */
+  unsigned long *out_binary_size;    /* Pointer to store actual size */
+
+} efb_model;
+
 typedef int efb_bool;
 
 #ifndef true
@@ -224,6 +251,12 @@ EFB_API EFB_INLINE efb_bool efb_build_executable(char *out_file_name, unsigned c
 
   /* === Write to File === */
   return efb_platform_write(out_file_name, efb_buffer, file_size);
+}
+
+EFB_API EFB_INLINE efb_bool efb_build(efb_model *model)
+{
+  (void)model;
+  return true;
 }
 
 #endif /* EFB_H */
